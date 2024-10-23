@@ -1,0 +1,63 @@
+# Ubuntu 22.04 기반
+FROM ubuntu:22.04
+MAINTAINER username <ryujt658@gmail.com>
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ Asia/Seoul
+ENV LC_CTYPE C.UTF-8
+
+# 작업 디렉토리 설정
+WORKDIR /root
+
+# 필수 패키지 설치
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    vim \
+    wget \
+    lftp \
+    zsh \
+    sudo \
+    net-tools \
+    ufw \
+    gcc \
+    cmake \
+    python3 \
+    python3-pip \
+    build-essential
+
+# Node.js 및 npm 설치 (최신 LTS 버전)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+    && apt-get install -y nodejs
+
+# Emscripten 설치
+RUN git clone https://github.com/emscripten-core/emsdk.git /root/emsdk
+
+# Emscripten SDK 설치 및 환경 설정
+WORKDIR /root/emsdk
+RUN ./emsdk install latest \
+    && ./emsdk activate latest \
+    && echo 'source "/root/emsdk/emsdk_env.sh"' >> ~/.zshrc
+
+# 설치된 Emscripten 환경을 로드
+RUN . /root/emsdk/emsdk_env.sh
+
+# Oh My Zsh 설치 및 설정
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
+    && git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/zsh-syntax-highlighting \
+    && echo "source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" >> ~/.zshrc \
+    && git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions \
+    && echo "source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" >> ~/.zshrc \
+    && echo "ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=111'" >> ~/.zshrc
+
+# Vim 설정
+RUN echo "syntax on\nfiletype indent plugin on\nset tabstop=8\nset softtabstop=4\nset autoindent\nset nu" >> ~/.vimrc
+
+# Zsh를 기본 쉘로 설정
+RUN chsh -s $(which zsh)
+
+# 클린업
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# 컨테이너 시작 시 유지
+CMD ["/bin/zsh", "-c", "tail -f /dev/null"]

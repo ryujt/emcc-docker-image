@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM Compression Test</title>
+</head>
+<body>
+    <h1>WASM Compression Test</h1>
+    <textarea id="input" rows="5" cols="50">Hello, WASM compression test!</textarea>
+    <br>
+    <button onclick="compressData()">Compress</button>
+    <button onclick="decompressData()">Decompress</button>
+    <br>
+    <textarea id="output" rows="5" cols="50" readonly></textarea>
+    <br>
+    <div id="stats"></div>
+
+    <script src="zlib.js"></script>
+    <script>
+        let module;
+        let compressedDataArray;  // 압축된 데이터를 JavaScript ArrayBuffer로 저장
+
+        Module.onRuntimeInitialized = function() {
+            module = Module;
+        };
+
+        function compressData() {
+            if (!module) {
+                console.error('WASM module not loaded yet');
+                return;
+            }
+
+            const input = document.getElementById('input').value;
+            const inputSize = input.length;
+
+            const inputPtr = module._malloc(inputSize + 1);
+            module.stringToUTF8(input, inputPtr, inputSize + 1);
+
+            const compressResultPtr = module._compress_data(inputPtr);
+            if (compressResultPtr === 0) {
+                console.error('Compression failed');
+                module._free(inputPtr);
+                return;
+            }
+
+            const compressedDataPtr = module.getValue(compressResultPtr, '*');
+            const compressedLength = module.getValue(compressResultPtr + 4, 'i32');
+
+            // 압축된 데이터를 JavaScript ArrayBuffer로 복사
+            compressedDataArray = new Uint8Array(module.HEAPU8.buffer, compressedDataPtr, compressedLength).slice();
+
+            const compressedHex = Array.from(compressedDataArray)
+                                       .map(b => b.toString(16).padStart(2, '0'))
+                                       .join('');
+
+            document.getElementById('output').value = compressedHex;
+
+            const stats = document.getElementById('stats');
+            stats.innerHTML = `
+                Original size: ${inputSize} bytes<br>
+                Compressed size: ${compressedLength} bytes<br>
+                Compression ratio: ${(compressedLength / inputSize * 100).toFixed(2)}%
+            `;
+
+            module._free(inputPtr);
+            module._free_compress_result(compressResultPtr);  // 이제 안전하게 메모리 해제 가능
+        }
+
+        function decompressData() {
+            if (!module || !compressedDataArray) {
+                console.error('WASM module not loaded or no compressed data available');
+                return;
+            }
+
+            // 압축된 데이터를 WASM 메모리에 복사
+            const compressedDataPtr = module._malloc(compressedDataArray.length);
+            module.HEAPU8.set(compressedDataArray, compressedDataPtr);
+
+            const decompressResultPtr = module._decompress_data(compressedDataPtr, compressedDataArray.length);
+            module._free(compressedDataPtr);  // 복사한 압축 데이터 메모리 해제
+
+            if (decompressResultPtr === 0) {
+                console.error('Decompression failed');
+                return;
+            }
+
+            const decompressedDataPtr = module.getValue(decompressResultPtr, '*');
+            const decompressedLength = module.getValue(decompressResultPtr + 4, 'i32');
+
+            const result = module.UTF8ToString(decompressedDataPtr, decompressedLength);
+            document.getElementById('output').value = result;
+
+            const stats = document.getElementById('stats');
+            stats.innerHTML += `<br>Decompressed size: ${decompressedLength} bytes`;
+
+            module._free_compress_result(decompressResultPtr);
+        }
+    </script>
+</body>
+</html>
