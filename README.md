@@ -4,12 +4,10 @@
 
 ## Docker 이미지 생성 및 컨테이너 실행
 
-### Mac
-
 1. **Docker 이미지 생성**
    - 아래 명령어는 Dockerfile을 기반으로 `emcc`라는 이름의 이미지를 생성합니다.
    ```bash
-   docker build -t emcc -< ubuntu-24.04.1-emcc
+   docker build -t emcc -f ubuntu-24.04.1-emcc .
    ```
 
 2. **Docker 컨테이너 실행**
@@ -20,26 +18,6 @@
 
 3. **Zsh로 컨테이너 접속 및 환경 설정**
    - 실행 중인 컨테이너에 접속하고 Emscripten 환경 변수를 설정한 후 Zsh 쉘을 실행합니다.
-   ```bash
-   docker exec -it emcc-container zsh -c "source /root/emsdk/emsdk_env.sh && /bin/zsh"
-   ```
-
-### Windows
-
-1. **Docker 이미지 생성**
-   - Dockerfile을 사용하여 `emcc`라는 이름의 이미지를 빌드합니다.
-   ```bash
-   docker build -t emcc -f ubuntu-24.04.1-emcc
-   ```
-
-2. **Docker 컨테이너 실행**
-   - 로컬 디렉토리 `D:\Projects`를 컨테이너 내부의 `/root/projects/` 경로에 마운트하고, 포트 8080을 외부에 노출합니다. 컨테이너는 종료되지 않도록 `tail -f /dev/null` 명령어로 유지합니다.
-   ```bash
-   docker run -d -p 8080:8080 -v D:\Projects:/root/projects/ --name emcc-container emcc tail -f /dev/null
-   ```
-
-3. **Zsh로 컨테이너 접속 및 환경 설정**
-   - Emscripten 환경 변수를 설정하고 Zsh 쉘을 실행합니다.
    ```bash
    docker exec -it emcc-container zsh -c "source /root/emsdk/emsdk_env.sh && /bin/zsh"
    ```
