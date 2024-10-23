@@ -10,13 +10,18 @@
    docker build -t emcc -f docker/ubuntu-24.04.1-emcc .
    ```
 
-2. **Docker 컨테이너 실행**
+2. **Docker 컨테이너 생성**
    - `docker run` 명령을 통해 `emcc-container`라는 이름의 컨테이너를 실행합니다. 로컬 디렉토리 `/Users/ryu/projects/`를 컨테이너의 `/root/projects/` 경로에 마운트하며, 포트 8080을 외부에 노출합니다.
    ```bash
-   docker run -d -p 8080:8080 -v /Users/ryu/projects/:/root/projects/ --name emcc-container emcc
+   docker create -p 8080:8080 -v /Users/ryu/projects/:/root/projects/ --name emcc-container emcc
    ```
 
-3. **Zsh로 컨테이너 접속 및 환경 설정**
+3. **Docker 컨테이너 실행**
+   ```bash
+   docker start emcc-container
+   ```
+
+4. **Zsh로 컨테이너 접속 및 환경 설정**
    - 실행 중인 컨테이너에 접속하고 Emscripten 환경 변수를 설정한 후 Zsh 쉘을 실행합니다.
    ```bash
    docker exec -it emcc-container zsh -c "source /root/emsdk/emsdk_env.sh && /bin/zsh"
