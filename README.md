@@ -7,7 +7,7 @@
 1. **Docker 이미지 생성**
    - 아래 명령어는 Dockerfile을 기반으로 `emcc`라는 이름의 이미지를 생성합니다.
    ```bash
-   docker build -t emcc -f ubuntu-24.04.1-emcc .
+   docker build -t emcc -f docker/ubuntu-24.04.1-emcc .
    ```
 
 2. **Docker 컨테이너 실행**
