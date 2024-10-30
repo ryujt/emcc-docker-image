@@ -117,6 +117,7 @@
 3. **간단한 웹 서버 실행**
    - 생성된 WebAssembly 파일을 테스트하기 위해 웹 서버를 실행합니다.
    ```bash
+   npm install -g http-server
    http-server -p 8080
    ```
 
